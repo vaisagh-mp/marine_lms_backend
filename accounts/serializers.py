@@ -48,7 +48,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'phone_number', 'position', 'ship_type', 'role']
+        fields = ['id', 'username', 'email', 'phone_number', 'position', 'ship_type', 'role', 'last_login']
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -92,7 +92,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "phone_number", "role", "position", "ship_type"]
+        fields = ["id", "username", "email", "phone_number", "role", "position", "ship_type", "last_login"]
 
 
 class LearnerProfileSerializer(serializers.ModelSerializer):

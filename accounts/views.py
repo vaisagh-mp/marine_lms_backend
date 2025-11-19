@@ -256,7 +256,8 @@ class UserAPIView(APIView):
             serializer = UserSerializer(user)
             return Response(serializer.data)
         else:
-            users = User.objects.all()
+            # Fetch only employees
+            users = User.objects.filter(role='employee')
             serializer = UserSerializer(users, many=True)
             return Response(serializer.data)
 
