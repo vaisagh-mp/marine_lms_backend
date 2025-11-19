@@ -1,10 +1,33 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from .models import Position, ShipType
 from courses.models import Course, Module
 from progress.models import UserCourseProgress
 
 User = get_user_model()
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add additional fields IN JWT TOKEN PAYLOAD
+        token['username'] = user.username
+        token['role'] = user.role
+
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        # Add custom fields IN LOGIN RESPONSE
+        data['id'] = self.user.id
+        data['username'] = self.user.username
+        data['role'] = self.user.role
+
+        return data
 
 
 class ShipTypeSerializer(serializers.ModelSerializer):

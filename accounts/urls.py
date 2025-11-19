@@ -6,14 +6,15 @@ from .views import (
     UserAPIView,
     UserProfileAPIView,
     AdminDashboardAPIView,
-    LearnerDashboardAPIView
+    LearnerDashboardAPIView,
+    CustomTokenObtainPairView
 )
 
 urlpatterns = [
     # ----------------------------
     # JWT Authentication
     # ----------------------------
-    path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     path('dashboard/admin/', AdminDashboardAPIView.as_view(), name='admin-dashboard'),

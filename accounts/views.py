@@ -11,14 +11,20 @@ from .serializers import (
     AdminCourseSerializer,
     AdminUserSerializer,
     LearnerProfileSerializer,
-    LearnerCourseProgressSerializer
+    LearnerCourseProgressSerializer,
+    CustomTokenObtainPairSerializer,
+    LearnerCourseSerializer
 )
 from courses.models import Course
 from progress.models import UserCourseProgress
 from rest_framework.permissions import IsAuthenticated
-from .serializers import LearnerCourseSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 User = get_user_model()
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 class AdminDashboardAPIView(APIView):
