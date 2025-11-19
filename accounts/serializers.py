@@ -53,18 +53,27 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'phone_number', 'position', 'ship_type', 'role', 'last_login', 'created_at']
-
+        fields = [
+            'id', 'username', 'first_name', 'last_name', 'email',
+            'phone_number', 'position', 'ship_type',
+            'role', 'last_login', 'created_at'
+        ]
 
 class UserCreateSerializer(serializers.ModelSerializer):
-    """
-    Used by Admin to create users (employees).
-    """
     password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'phone_number', 'position', 'ship_type', 'role', 'password']
+        fields = [
+            'id', 'username', 'first_name', 'last_name', 'email',
+            'phone_number', 'position', 'ship_type',
+            'role', 'password'
+        ]
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("This email is already registered.")
+        return value
 
     def create(self, validated_data):
         password = validated_data.pop('password')
