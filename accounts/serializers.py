@@ -71,8 +71,11 @@ class UserCreateSerializer(serializers.ModelSerializer):
         ]
 
     def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
+        user_id = self.instance.id if self.instance else None
+
+        if User.objects.filter(email=value).exclude(id=user_id).exists():
             raise serializers.ValidationError("This email is already registered.")
+
         return value
 
     def create(self, validated_data):
@@ -81,6 +84,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
 
 
 class AdminCourseSerializer(serializers.ModelSerializer):
