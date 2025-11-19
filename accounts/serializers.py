@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from .models import Position, ShipType
 from courses.models import Course, Module
 from progress.models import UserCourseProgress
+from django.contrib.auth.models import update_last_login
 
 User = get_user_model()
 
@@ -13,7 +14,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
 
-        # Add additional fields IN JWT TOKEN PAYLOAD
+        # Add custom JWT payload fields
         token['username'] = user.username
         token['role'] = user.role
 
@@ -22,7 +23,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
 
-        # Add custom fields IN LOGIN RESPONSE
+        # Update last login manually
+        update_last_login(None, self.user)
+
+        # Add custom response fields
         data['id'] = self.user.id
         data['username'] = self.user.username
         data['role'] = self.user.role
