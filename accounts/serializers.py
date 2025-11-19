@@ -26,6 +26,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['id'] = self.user.id
         data['username'] = self.user.username
         data['role'] = self.user.role
+        data['last_login'] = self.user.last_login
 
         return data
 
@@ -48,7 +49,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'phone_number', 'position', 'ship_type', 'role', 'last_login']
+        fields = ['id', 'username', 'email', 'phone_number', 'position', 'ship_type', 'role', 'last_login', 'created_at']
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -92,7 +93,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "phone_number", "role", "position", "ship_type", "last_login"]
+        fields = ["id", "username", "email", "phone_number", "role", "position", "ship_type", "last_login", "created_at"]
 
 
 class LearnerProfileSerializer(serializers.ModelSerializer):
