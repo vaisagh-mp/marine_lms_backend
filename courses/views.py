@@ -118,20 +118,28 @@ class ModuleAPIView(BaseAPIView):
     model = Module
     serializer_class = ModuleSerializer
 
-    def post(self, request):
+    # FULL OVERRIDE of BaseAPIView.post (BaseAPIView.post is ignored now)
+    def post(self, request, *args, **kwargs):
         if not (request.user.is_staff or request.user.role == 'admin'):
             return Response({"detail": "You do not have permission to perform this action."},
                             status=status.HTTP_403_FORBIDDEN)
 
-        # Extract normal module data
+        # Prevent many=True error
+        if isinstance(request.data, list):
+            return Response(
+                {"detail": "List upload is not allowed for modules."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         module_data = request.data.copy()
-        module_files = request.FILES.getlist("files")  # multiple files
+        module_files = request.FILES.getlist("files")
 
         serializer = self.serializer_class(data=module_data)
+
         if serializer.is_valid():
             module = serializer.save()
 
-            # Save multiple files
+            # Save files
             for file_obj in module_files:
                 ModuleFile.objects.create(module=module, file=file_obj)
 
