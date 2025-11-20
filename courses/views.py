@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from .models import Course, Module, Quiz, Question
+from .models import Course, Module, Quiz, Question, ModuleFile
 from .serializers import CourseSerializer, ModuleSerializer, QuizSerializer, QuestionSerializer
 
 
@@ -117,6 +117,52 @@ class CourseAPIView(BaseAPIView):
 class ModuleAPIView(BaseAPIView):
     model = Module
     serializer_class = ModuleSerializer
+
+    def post(self, request):
+        if not (request.user.is_staff or request.user.role == 'admin'):
+            return Response({"detail": "You do not have permission to perform this action."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        # Extract normal module data
+        module_data = request.data.copy()
+        module_files = request.FILES.getlist("files")  # multiple files
+
+        serializer = self.serializer_class(data=module_data)
+        if serializer.is_valid():
+            module = serializer.save()
+
+            # Save multiple files
+            for file_obj in module_files:
+                ModuleFile.objects.create(module=module, file=file_obj)
+
+            return Response(self.serializer_class(module).data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, pk):
+        if not (request.user.is_staff or request.user.role == 'admin'):
+            return Response({"detail": "You do not have permission to perform this action."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        module = self.get_object(pk)
+        if not module:
+            return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        module_data = request.data.copy()
+        module_files = request.FILES.getlist("files")  # multiple files
+
+        serializer = self.serializer_class(module, data=module_data, partial=True)
+        if serializer.is_valid():
+            module = serializer.save()
+
+            # Add new files (existing files stay)
+            for file_obj in module_files:
+                ModuleFile.objects.create(module=module, file=file_obj)
+
+            return Response(self.serializer_class(module).data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class QuizAPIView(BaseAPIView):
