@@ -1,12 +1,29 @@
 from django.contrib import admin
-from .models import Course, Module, Quiz, Question
+from .models import Course, Module, Quiz, Question, ModuleFile
 
 
+# --------------------------
+# Inline for multiple files
+# --------------------------
+class ModuleFileInline(admin.TabularInline):
+    model = ModuleFile
+    extra = 1
+    fields = ("file",)
+
+
+# --------------------------
+# Inline for Modules under Course
+# --------------------------
 class ModuleInline(admin.TabularInline):
     model = Module
     extra = 1
+    fields = ("title", "description", "video_url", "video")
+    show_change_link = True  # allow clicking into module admin page
 
 
+# --------------------------
+# Course Admin
+# --------------------------
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
     list_display = ("title", "ship_type")
@@ -15,12 +32,16 @@ class CourseAdmin(admin.ModelAdmin):
     inlines = [ModuleInline]
 
 
+# --------------------------
+# Module Admin
+# --------------------------
 @admin.register(Module)
 class ModuleAdmin(admin.ModelAdmin):
     list_display = ("title", "course")
     search_fields = ("title", "description")
     list_filter = ("course",)
-
+    fields = ("course", "title", "description", "video_url", "video")   # NEW
+    inlines = [ModuleFileInline]
 
 class QuestionInline(admin.TabularInline):
     model = Question
