@@ -126,17 +126,17 @@ class ModuleAPIView(BaseAPIView):
                return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
            serializer = self.serializer_class(module)
            return Response(serializer.data)
-    
+
        # If course id is passed as query param → filter
        course_id = request.query_params.get("course")
        if course_id:
            modules = Module.objects.filter(course_id=course_id)
        else:
            modules = Module.objects.all()
-    
+
        serializer = self.serializer_class(modules, many=True)
        return Response(serializer.data)
-    
+
     # FULL OVERRIDE of BaseAPIView.post (BaseAPIView.post is ignored now)
     def post(self, request, *args, **kwargs):
         if not (request.user.is_staff or request.user.role == 'admin'):
@@ -196,7 +196,46 @@ class QuizAPIView(BaseAPIView):
     model = Quiz
     serializer_class = QuizSerializer
 
+    def get(self, request, pk=None):
+        # If specific quiz requested
+        if pk:
+            quiz = self.get_object(pk)
+            if not quiz:
+                return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = self.serializer_class(quiz)
+            return Response(serializer.data)
+
+        # Filter quizzes by course ID
+        course_id = request.query_params.get("course")
+        if course_id:
+            quizzes = Quiz.objects.filter(module__course_id=course_id)
+        else:
+            quizzes = Quiz.objects.all()
+
+        serializer = self.serializer_class(quizzes, many=True)
+        return Response(serializer.data)
+
+
 
 class QuestionAPIView(BaseAPIView):
     model = Question
     serializer_class = QuestionSerializer
+
+    def get(self, request, pk=None):
+        # If single question requested
+        if pk:
+            question = self.get_object(pk)
+            if not question:
+                return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = self.serializer_class(question)
+            return Response(serializer.data)
+
+        # Filter questions by course ID
+        course_id = request.query_params.get("course")
+        if course_id:
+            questions = Question.objects.filter(quiz__module__course_id=course_id)
+        else:
+            questions = Question.objects.all()
+
+        serializer = self.serializer_class(questions, many=True)
+        return Response(serializer.data)
