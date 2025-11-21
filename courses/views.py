@@ -118,6 +118,25 @@ class ModuleAPIView(BaseAPIView):
     model = Module
     serializer_class = ModuleSerializer
 
+    def get(self, request, pk=None):
+       # If single module by ID
+       if pk:
+           module = self.get_object(pk)
+           if not module:
+               return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+           serializer = self.serializer_class(module)
+           return Response(serializer.data)
+    
+       # If course id is passed as query param → filter
+       course_id = request.query_params.get("course")
+       if course_id:
+           modules = Module.objects.filter(course_id=course_id)
+       else:
+           modules = Module.objects.all()
+    
+       serializer = self.serializer_class(modules, many=True)
+       return Response(serializer.data)
+    
     # FULL OVERRIDE of BaseAPIView.post (BaseAPIView.post is ignored now)
     def post(self, request, *args, **kwargs):
         if not (request.user.is_staff or request.user.role == 'admin'):
