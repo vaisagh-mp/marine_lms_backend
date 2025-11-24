@@ -144,25 +144,30 @@ class ModuleAPIView(BaseAPIView):
             return Response({"detail": "You do not have permission to perform this action."},
                             status=status.HTTP_403_FORBIDDEN)
 
-        # CASE 1: MULTIPLE MODULES (NO FILES)
+        # Prevent many=True error
         if isinstance(request.data, list):
-            serializer = self.serializer_class(data=request.data, many=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "List upload is not allowed for modules."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        # CASE 2: SINGLE MODULE (WITH OR WITHOUT FILES)
-        module_data = request.data.copy()
+        # IMPORTANT FIX: avoid copying file objects
+        module_data = request.POST.dict()
 
-        module_files = request.FILES.getlist("files") if request.FILES else []
+        module_files = request.FILES.getlist("files")
+        video_file = request.FILES.get("video", None)
 
         serializer = self.serializer_class(data=module_data)
 
         if serializer.is_valid():
             module = serializer.save()
 
-            # Save files only if present
+            # Save video if present
+            if video_file:
+                module.video = video_file
+                module.save()
+
+            # Save multiple files
             for file_obj in module_files:
                 ModuleFile.objects.create(module=module, file=file_obj)
 
@@ -180,19 +185,22 @@ class ModuleAPIView(BaseAPIView):
         if not module:
             return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
     
-        module_data = request.data.copy()
+        module_data = request.POST.dict()
     
-        # Avoid pickle error when no files
-        module_files = request.FILES.getlist("files") if request.FILES else []
+        module_files = request.FILES.getlist("files")
+        video_file = request.FILES.get("video", None)
     
         serializer = self.serializer_class(module, data=module_data, partial=True)
     
         if serializer.is_valid():
             module = serializer.save()
     
-            # Add files only when uploaded
-            for file_obj in module_files:
-                ModuleFile.objects.create(module=module, file=file_obj)
+            if video_file:
+                module.video = video_file
+                module.save()
+    
+            for f in module_files:
+                ModuleFile.objects.create(module=module, file=f)
     
             return Response(self.serializer_class(module).data)
     
