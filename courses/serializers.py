@@ -51,10 +51,20 @@ class QuizDetailSerializer(serializers.ModelSerializer):
 
 class ModuleDetailSerializer(serializers.ModelSerializer):
     quiz = QuizDetailSerializer(read_only=True)
+    files = ModuleFileSerializer(many=True, read_only=True)
 
     class Meta:
         model = Module
-        fields = ["id", "title", "description", "video_url", "video", "quiz"]
+        fields = [
+            "id",
+            "title",
+            "description",
+            "video_url",
+            "video",
+            "files",
+            "quiz"
+        ]
+
 
 
 class CourseDetailSerializer(serializers.ModelSerializer):
