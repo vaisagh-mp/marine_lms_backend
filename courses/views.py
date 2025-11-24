@@ -144,20 +144,25 @@ class ModuleAPIView(BaseAPIView):
             return Response({"detail": "You do not have permission to perform this action."},
                             status=status.HTTP_403_FORBIDDEN)
 
-        # If request is JSON → request.FILES will be empty
+        # CASE 1: MULTIPLE MODULES (NO FILES)
+        if isinstance(request.data, list):
+            serializer = self.serializer_class(data=request.data, many=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # CASE 2: SINGLE MODULE (WITH OR WITHOUT FILES)
         module_data = request.data.copy()
 
-        # Only get files when they exist
-        module_files = []
-        if hasattr(request, "FILES") and request.FILES:
-            module_files = request.FILES.getlist("files")
+        module_files = request.FILES.getlist("files") if request.FILES else []
 
         serializer = self.serializer_class(data=module_data)
 
         if serializer.is_valid():
             module = serializer.save()
 
-            # Save uploaded files (only if any)
+            # Save files only if present
             for file_obj in module_files:
                 ModuleFile.objects.create(module=module, file=file_obj)
 
@@ -170,28 +175,29 @@ class ModuleAPIView(BaseAPIView):
         if not (request.user.is_staff or request.user.role == 'admin'):
             return Response({"detail": "You do not have permission to perform this action."},
                             status=status.HTTP_403_FORBIDDEN)
-
+    
         module = self.get_object(pk)
         if not module:
             return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
-
+    
         module_data = request.data.copy()
-
-        # FIX: Only load files when they actually exist
-        module_files = request.FILES.getlist("files") if "files" in request.FILES else []
-
+    
+        # Avoid pickle error when no files
+        module_files = request.FILES.getlist("files") if request.FILES else []
+    
         serializer = self.serializer_class(module, data=module_data, partial=True)
+    
         if serializer.is_valid():
             module = serializer.save()
-
-            # Add new files only if present
-            if module_files:
-                for file_obj in module_files:
-                    ModuleFile.objects.create(module=module, file=file_obj)
-
+    
+            # Add files only when uploaded
+            for file_obj in module_files:
+                ModuleFile.objects.create(module=module, file=file_obj)
+    
             return Response(self.serializer_class(module).data)
-
+    
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class QuizAPIView(BaseAPIView):
