@@ -38,7 +38,16 @@ class QuestionSerializer(serializers.ModelSerializer):
 class QuestionDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = ["id", "question_text", "option_a", "option_b", "option_c", "option_d"]
+        fields = [
+            "id",
+            "question_text",
+            "option_a",
+            "option_b",
+            "option_c",
+            "option_d",
+            "correct_answer",
+        ]
+
 
 
 class QuizDetailSerializer(serializers.ModelSerializer):
