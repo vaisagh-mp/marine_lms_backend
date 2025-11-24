@@ -1,8 +1,9 @@
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from .models import Course, Module, Quiz, Question, ModuleFile
-from .serializers import CourseSerializer, ModuleSerializer, QuizSerializer, QuestionSerializer
+from .serializers import CourseSerializer, ModuleSerializer, QuizSerializer, QuestionSerializer,CourseDetailSerializer
 
 
 # ----------------------------
@@ -239,3 +240,26 @@ class QuestionAPIView(BaseAPIView):
 
         serializer = self.serializer_class(questions, many=True)
         return Response(serializer.data)
+
+
+class LearnerCourseDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, course_id):
+        user = request.user
+
+        # Ensure learner is eligible for this course (role=employee only)
+        try:
+            course = Course.objects.get(
+                id=course_id,
+                ship_type=user.ship_type,
+                positions=user.position
+            )
+        except Course.DoesNotExist:
+            return Response(
+                {"detail": "You do not have access to this course."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = CourseDetailSerializer(course)
+        return Response(serializer.data, status=status.HTTP_200_OK)

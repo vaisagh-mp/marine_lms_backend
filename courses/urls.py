@@ -1,10 +1,11 @@
 from django.urls import path
-from .views import CourseAPIView, ModuleAPIView, QuizAPIView, QuestionAPIView
+from .views import CourseAPIView, ModuleAPIView, QuizAPIView, QuestionAPIView, LearnerCourseDetailAPIView
 
 urlpatterns = [
     # Courses
     path('', CourseAPIView.as_view(), name="course-list-create"),
     path('<int:pk>/', CourseAPIView.as_view(), name="course-detail"),
+    path('learner/<int:course_id>/', LearnerCourseDetailAPIView.as_view(), name='learner-course-detail'),
 
     # Modules
     path('modules/', ModuleAPIView.as_view(), name="module-list-create"),
