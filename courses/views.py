@@ -144,28 +144,27 @@ class ModuleAPIView(BaseAPIView):
             return Response({"detail": "You do not have permission to perform this action."},
                             status=status.HTTP_403_FORBIDDEN)
 
-        # Prevent many=True error
-        if isinstance(request.data, list):
-            return Response(
-                {"detail": "List upload is not allowed for modules."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
+        # If request is JSON → request.FILES will be empty
         module_data = request.data.copy()
-        module_files = request.FILES.getlist("files")
+
+        # Only get files when they exist
+        module_files = []
+        if hasattr(request, "FILES") and request.FILES:
+            module_files = request.FILES.getlist("files")
 
         serializer = self.serializer_class(data=module_data)
 
         if serializer.is_valid():
             module = serializer.save()
 
-            # Save files
+            # Save uploaded files (only if any)
             for file_obj in module_files:
                 ModuleFile.objects.create(module=module, file=file_obj)
 
             return Response(self.serializer_class(module).data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     def patch(self, request, pk):
         if not (request.user.is_staff or request.user.role == 'admin'):
@@ -177,20 +176,22 @@ class ModuleAPIView(BaseAPIView):
             return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
 
         module_data = request.data.copy()
-        module_files = request.FILES.getlist("files")  # multiple files
+
+        # FIX: Only load files when they actually exist
+        module_files = request.FILES.getlist("files") if "files" in request.FILES else []
 
         serializer = self.serializer_class(module, data=module_data, partial=True)
         if serializer.is_valid():
             module = serializer.save()
 
-            # Add new files (existing files stay)
-            for file_obj in module_files:
-                ModuleFile.objects.create(module=module, file=file_obj)
+            # Add new files only if present
+            if module_files:
+                for file_obj in module_files:
+                    ModuleFile.objects.create(module=module, file=file_obj)
 
             return Response(self.serializer_class(module).data)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class QuizAPIView(BaseAPIView):
