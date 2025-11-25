@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from courses.models import Course, Quiz
+from courses.models import Course, Quiz, Module
 
 
 class UserCourseProgress(models.Model):
@@ -28,3 +28,17 @@ class QuizAttempt(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.quiz.module.title} ({self.score})"
+
+
+class UserModuleProgress(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    module = models.ForeignKey(Module, on_delete=models.CASCADE)
+    completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('user', 'module')
+
+    def __str__(self):
+        status = "Completed" if self.completed else "Pending"
+        return f"{self.user.username} - {self.module.title} ({status})"

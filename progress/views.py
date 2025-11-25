@@ -1,7 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from .models import UserCourseProgress, QuizAttempt
+from .models import UserCourseProgress, QuizAttempt, UserModuleProgress
+from courses.models import Module, Course, Quiz
 from .serializers import UserCourseProgressSerializer, QuizAttemptSerializer
 
 # ----------------------------
@@ -75,3 +76,27 @@ class UserCourseProgressAPIView(BaseAPIView):
 class QuizAttemptAPIView(BaseAPIView):
     model = QuizAttempt
     serializer_class = QuizAttemptSerializer
+
+
+
+class CourseProgressAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, course_id):
+        user = request.user
+
+        total_modules = Module.objects.filter(course_id=course_id).count()
+        completed_modules = UserModuleProgress.objects.filter(
+            user=user, module__course_id=course_id, completed=True
+        ).count()
+
+        percentage = 0
+        if total_modules > 0:
+            percentage = round((completed_modules / total_modules) * 100, 2)
+
+        return Response({
+            "course_id": course_id,
+            "completed_modules": completed_modules,
+            "total_modules": total_modules,
+            "progress_percentage": percentage
+        })
