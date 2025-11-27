@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.db.models import Q
 from rest_framework import status, permissions
 from .models import Course, Module, Quiz, Question, ModuleFile
 from .serializers import CourseSerializer, ModuleSerializer, QuizSerializer, QuestionSerializer,CourseDetailSerializer
@@ -19,6 +20,41 @@ class IsAdminOrReadOnly(permissions.BasePermission):
             return request.user.is_authenticated
         return request.user.is_staff or request.user.role == 'admin'
 
+
+
+class CourseSearchAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        query = request.query_params.get("q", "").strip()
+
+        # Base queryset
+        courses = Course.objects.all()
+
+        # Restrict for employee
+        if user.role == "employee":
+            courses = courses.filter(
+                ship_type=user.ship_type,
+                positions=user.position
+            )
+
+        # If no search text, return eligible courses
+        if query == "":
+            serializer = CourseDetailSerializer(courses, many=True)
+            return Response(serializer.data)
+
+        # Search keyword filter
+        courses = courses.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query) |
+            Q(ship_type__name__icontains=query) |
+            Q(positions__name__icontains=query)
+        ).distinct()
+
+        serializer = CourseDetailSerializer(courses, many=True)
+        return Response(serializer.data)
+    
 
 # ----------------------------
 # Base class for CRUD

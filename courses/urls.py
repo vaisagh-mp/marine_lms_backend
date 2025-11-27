@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CourseAPIView, ModuleAPIView, QuizAPIView, QuestionAPIView, LearnerCourseDetailAPIView
+from .views import CourseAPIView, ModuleAPIView, QuizAPIView, QuestionAPIView, LearnerCourseDetailAPIView, CourseSearchAPIView
 
 urlpatterns = [
     # Courses
@@ -18,4 +18,6 @@ urlpatterns = [
     # Questions
     path('questions/', QuestionAPIView.as_view(), name="question-list-create"),
     path('questions/<int:pk>/', QuestionAPIView.as_view(), name="question-detail"),
+
+    path("search/", CourseSearchAPIView.as_view(), name="course-search"),
 ]
